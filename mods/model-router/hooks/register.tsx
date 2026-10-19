@@ -116,6 +116,10 @@ const view = async ($: EngineInterface, { Box, Button, Text }: Elements[RenderSu
 }
 
 export const register: Register = on => {
+  // Surfaces the band has been drawn on. A host may attach a surface and never
+  // ask for the band; then the pane is opened instead.
+  const bandDrawnOn = new Set<RenderSurface>()
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'router',
@@ -144,9 +148,15 @@ export const register: Register = on => {
       await setMode($, asked as Mode)
       return { text: asked === 'auto' ? 'Router en automático.' : `Router fijado en ${MODELS[asked as Tier].name}.` }
     }
-    await openPane($)
+    const opened = await openPane($)
     const current = await read($, mode)
-    return { text: `Router: ${current}. Uso: /router auto|haiku|sonnet|opus` }
+    const surfaces = await $.session.surfaces()
+    const where = [
+      `superficies: ${surfaces.length === 0 ? 'ninguna' : surfaces.join(', ')}`,
+      `banda dibujada en: ${bandDrawnOn.size === 0 ? 'ninguna' : [...bandDrawnOn].join(', ')}`,
+      `panel: ${opened.isPlaced ? 'abierto' : `sin colocar (${opened.reason})`}`,
+    ].join(' · ')
+    return { text: `Router: ${current}. Uso: /router auto|haiku|sonnet|opus\n${where}` }
   })
 
   on('prompt.submit', async ($, e, next) => {
@@ -169,6 +179,9 @@ export const register: Register = on => {
       reason = `${REASON_OF[tier]} (estimado)`
     }
     await show($, { tier, reason, isPending: false })
+    if (bandDrawnOn.size === 0) {
+      void openPane($)
+    }
 
     return next(e)
   }).catch(($, e, next) => next(e))
@@ -187,6 +200,7 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    bandDrawnOn.add(e.surface)
     if (e.props.hasSurvey) {
       return next(e)
     }

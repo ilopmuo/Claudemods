@@ -1,6 +1,6 @@
 {
   "name": "model-router",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Elige Haiku, Sonnet u Opus según la complejidad de cada prompt y lo muestra sobre el prompt",
   "author": { "name": "ilopmuo" },
   "types": "./types/index.d.ts"

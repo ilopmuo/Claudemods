@@ -14,7 +14,7 @@ Antes de cada prompt, Haiku clasifica la tarea como simple, moderada o compleja 
 
 Encima del prompt aparece una banda con el modelo elegido resaltado y el motivo, y botones para pasar a modo **Auto** o fijar un modelo a mano. También se puede usar `/router auto|haiku|sonnet|opus`. Los subagentes conservan su propio modelo.
 
-La banda sobre el prompt solo existe en la terminal y en la app de escritorio. En la app móvil y en la web la misma vista se abre en un panel **Model router**; `/router` sin argumentos lo abre en cualquier superficie.
+La vista se dibuja en la banda sobre el prompt. Si la app no la pide (la móvil y la web no tienen banda, y una app de escritorio puede no dibujarla), tras el primer prompt la misma vista se abre en un panel **Model router**. `/router` sin argumentos abre el panel e indica en qué superficies está la sesión y dónde se ha dibujado la banda.
 
 ### Instalar
 

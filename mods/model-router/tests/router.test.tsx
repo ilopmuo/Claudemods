@@ -6,8 +6,12 @@ const SURFACES = ['terminal', 'desktop'] as const
 
 // The bottom of the chain: the classifier answers `label`, prompts enter as typed,
 // and each model request records the model it was sent to.
-const world = (on: On, label: string | Error) => {
+const world = (on: On, label: string | Error, opened: string[] = []) => {
   const sent: string[] = []
+  on('ui.open', ($, e) => {
+    opened.push(e.id)
+    return { value: { isPlaced: true } }
+  })
   on('model.classify', () => {
     if (label instanceof Error) throw label
     return { value: label }
@@ -103,5 +107,27 @@ describe('pane', () => {
     } as never)
     expect((await ui.findAll({ text: /Haiku/ })).length).toBeGreaterThan(0)
     expect((await ui.findAll({ text: /tarea simple/ })).length).toBeGreaterThan(0)
+  })
+})
+
+describe('fallback', () => {
+  test('opens the pane when no surface has drawn the band', async ($, on) => {
+    const opened: string[] = []
+    world(on, 'simple', opened)
+    await submit($, 'hola')
+    expect(opened).toContain('model-router')
+  })
+
+  test('leaves the pane closed once the band is drawn', async ($, on) => {
+    const opened: string[] = []
+    world(on, 'simple', opened)
+    await $.ui.mount({
+      plugin: 'model-router',
+      surface: 'desktop',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80 } as never,
+    })
+    await submit($, 'hola')
+    expect(opened).toEqual([])
   })
 })
