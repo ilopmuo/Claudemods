@@ -1,0 +1,11 @@
+{
+  "name": "claudemods",
+  "owner": { "name": "ilopmuo" },
+  "plugins": [
+    {
+      "name": "model-router",
+      "source": "./mods/model-router",
+      "description": "Elige Haiku, Sonnet u Opus según la complejidad de cada prompt y lo muestra sobre el prompt"
+    }
+  ]
+}
