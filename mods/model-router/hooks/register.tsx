@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register, RenderSurface } from 'claude-code'
 
 import type { Decision, Mode, Tier } from '../types'
 
@@ -12,6 +12,12 @@ const MODELS: Record<Tier, { id: string; name: string; cost: string; color: stri
   opus: { id: 'claude-opus-5-5', name: 'Opus', cost: '$$$', color: 'claude' },
 }
 const TIERS: readonly Tier[] = ['haiku', 'sonnet', 'opus']
+
+// The band above the prompt is drawn on the terminal and desktop only; elsewhere
+// (the mobile app, the editor) the same view goes in a pane.
+const PANE = 'model-router'
+const HAS_BAND: readonly RenderSurface[] = ['terminal', 'desktop']
+const openPane = ($: EngineInterface) => $.ui.open({ id: PANE, title: 'Model router' })
 
 const LABELS = ['simple', 'moderate', 'complex'] as const
 const TIER_OF: Record<(typeof LABELS)[number], Tier> = {
@@ -57,6 +63,58 @@ const setMode = async ($: EngineInterface, next: Mode) => {
   }
 }
 
+const view = async ($: EngineInterface, { Box, Button, Text }: Elements[RenderSurface]) => {
+  const current = await read($, mode)
+  const chosen = await read($, decision)
+
+  return (
+    <Box flexDirection="column">
+      <Box columnGap={1}>
+        <Text bold>Modelo</Text>
+        {TIERS.map(tier => {
+          const model = MODELS[tier]
+          const isChosen = chosen !== null && !chosen.isPending && chosen.tier === tier
+          return isChosen ? (
+            <Text bold color="inverseText" backgroundColor={model.color}>
+              {' '}
+              {model.name} {model.cost}{' '}
+            </Text>
+          ) : (
+            <Text dimColor>
+              {' '}
+              {model.name} {model.cost}{' '}
+            </Text>
+          )
+        })}
+        <Text dimColor={chosen === null || chosen.isPending}>
+          {chosen === null ? 'esperando prompt' : chosen.isPending ? 'analizando…' : chosen.reason}
+        </Text>
+      </Box>
+      <Box columnGap={1}>
+        <Text dimColor>Modo</Text>
+        <Button
+          key="mode-auto"
+          plain
+          variant={current === 'auto' ? 'primary' : 'secondary'}
+          onPress={() => setMode($, 'auto')}
+        >
+          {current === 'auto' ? '● Auto' : '○ Auto'}
+        </Button>
+        {TIERS.map(tier => (
+          <Button
+            key={`mode-${tier}`}
+            plain
+            variant={current === tier ? 'primary' : 'secondary'}
+            onPress={() => setMode($, tier)}
+          >
+            {current === tier ? '●' : '○'} {MODELS[tier].name}
+          </Button>
+        ))}
+      </Box>
+    </Box>
+  )
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -64,6 +122,18 @@ export const register: Register = on => {
       description: 'Router de modelos: auto, haiku, sonnet u opus',
       argumentHint: 'auto|haiku|sonnet|opus',
     })
+    const surfaces = await $.session.surfaces()
+    if (surfaces.some(surface => !HAS_BAND.includes(surface))) {
+      void openPane($)
+    }
+
+    return next(e)
+  })
+
+  on('session.attach', async ($, e, next) => {
+    if (!HAS_BAND.includes(e.surface)) {
+      void openPane($)
+    }
 
     return next(e)
   })
@@ -74,6 +144,7 @@ export const register: Register = on => {
       await setMode($, asked as Mode)
       return { text: asked === 'auto' ? 'Router en automático.' : `Router fijado en ${MODELS[asked as Tier].name}.` }
     }
+    await openPane($)
     const current = await read($, mode)
     return { text: `Router: ${current}. Uso: /router auto|haiku|sonnet|opus` }
   })
@@ -119,55 +190,8 @@ export const register: Register = on => {
     if (e.props.hasSurvey) {
       return next(e)
     }
-    const { Box, Button, Text } = $.ui.resolve(e)
-    const current = await read($, mode)
-    const chosen = await read($, decision)
-
-    return (
-      <Box flexDirection="column">
-        <Box columnGap={1}>
-          <Text bold>Modelo</Text>
-          {TIERS.map(tier => {
-            const model = MODELS[tier]
-            const isChosen = chosen !== null && !chosen.isPending && chosen.tier === tier
-            return isChosen ? (
-              <Text bold color="inverseText" backgroundColor={model.color}>
-                {' '}
-                {model.name} {model.cost}{' '}
-              </Text>
-            ) : (
-              <Text dimColor>
-                {' '}
-                {model.name} {model.cost}{' '}
-              </Text>
-            )
-          })}
-          <Text dimColor={chosen === null || chosen.isPending}>
-            {chosen === null ? 'esperando prompt' : chosen.isPending ? 'analizando…' : chosen.reason}
-          </Text>
-        </Box>
-        <Box columnGap={1}>
-          <Text dimColor>Modo</Text>
-          <Button
-            key="mode-auto"
-            plain
-            variant={current === 'auto' ? 'primary' : 'secondary'}
-            onPress={() => setMode($, 'auto')}
-          >
-            {current === 'auto' ? '● Auto' : '○ Auto'}
-          </Button>
-          {TIERS.map(tier => (
-            <Button
-              key={`mode-${tier}`}
-              plain
-              variant={current === tier ? 'primary' : 'secondary'}
-              onPress={() => setMode($, tier)}
-            >
-              {current === tier ? '●' : '○'} {MODELS[tier].name}
-            </Button>
-          ))}
-        </Box>
-      </Box>
-    )
+    return view($, $.ui.resolve(e))
   })
+
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => view($, $.ui.resolve(e)))
 }

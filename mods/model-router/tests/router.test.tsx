@@ -89,3 +89,19 @@ describe('band', () => {
     })
   }
 })
+
+describe('pane', () => {
+  test('shows the chosen model on mobile, where there is no band', async ($, on) => {
+    world(on, 'simple')
+    await submit($, 'hola')
+    const ui = await $.ui.mount({
+      plugin: 'model-router',
+      surface: 'mobile',
+      component: 'Pane',
+      requestId: 'model-router',
+      props: { title: 'Model router', isFocused: false, bodyColumns: 40, placement: 'inline' } as never,
+    } as never)
+    expect((await ui.findAll({ text: /Haiku/ })).length).toBeGreaterThan(0)
+    expect((await ui.findAll({ text: /tarea simple/ })).length).toBeGreaterThan(0)
+  })
+})

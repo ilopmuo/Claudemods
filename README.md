@@ -14,6 +14,8 @@ Antes de cada prompt, Haiku clasifica la tarea como simple, moderada o compleja 
 
 Encima del prompt aparece una banda con el modelo elegido resaltado y el motivo, y botones para pasar a modo **Auto** o fijar un modelo a mano. También se puede usar `/router auto|haiku|sonnet|opus`. Los subagentes conservan su propio modelo.
 
+La banda sobre el prompt solo existe en la terminal y en la app de escritorio. En la app móvil y en la web la misma vista se abre en un panel **Model router**; `/router` sin argumentos lo abre en cualquier superficie.
+
 ### Instalar
 
 En la app de escritorio: **+** junto al prompt → **Plugins** → **Add marketplace** con `ilopmuo/Claudemods` → **Add plugin** → `model-router`.
