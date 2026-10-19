@@ -6,8 +6,15 @@ const SURFACES = ['terminal', 'desktop'] as const
 
 // The bottom of the chain: the classifier answers `label`, prompts enter as typed,
 // and each model request records the model it was sent to.
-const world = (on: On, label: string | Error, opened: string[] = []) => {
+const world = (
+  on: On,
+  label: string | Error,
+  opened: string[] = [],
+  surfaces: string[] = ['desktop'],
+  logged: string[] = [],
+) => {
   const sent: string[] = []
+  on('session.surfaces', () => ({ value: surfaces as never }))
   on('ui.open', ($, e) => {
     opened.push(e.id)
     return { value: { isPlaced: true } }
@@ -18,6 +25,10 @@ const world = (on: On, label: string | Error, opened: string[] = []) => {
   })
   on('prompt.submit', ($, e) => ({ text: e.text }))
   on('ui.status', () => ({ value: undefined }))
+  on('ui.log', ($, e) => {
+    logged.push(e.text)
+    return { value: undefined }
+  })
   on('turn.step', async function* ($, e) {
     sent.push(e.model)
     return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn', usage: null }
@@ -129,5 +140,14 @@ describe('fallback', () => {
     })
     await submit($, 'hola')
     expect(opened).toEqual([])
+  })
+})
+
+describe('no surface', () => {
+  test('logs the chosen model to the transcript', async ($, on) => {
+    const logged: string[] = []
+    world(on, 'complex', [], [], logged)
+    await submit($, 'Rediseña la arquitectura')
+    expect(logged).toEqual(['Router: Opus $$$ · tarea compleja'])
   })
 })

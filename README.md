@@ -16,6 +16,13 @@ Encima del prompt aparece una banda con el modelo elegido resaltado y el motivo,
 
 La vista se dibuja en la banda sobre el prompt. Si la app no la pide (la móvil y la web no tienen banda, y una app de escritorio puede no dibujarla), tras el primer prompt la misma vista se abre en un panel **Model router**. `/router` sin argumentos abre el panel e indica en qué superficies está la sesión y dónde se ha dibujado la banda.
 
+En las sesiones en la nube la app no conecta ninguna superficie de dibujo, así que no hay banda ni panel: el modelo elegido se escribe como una línea en la conversación en cada prompt. Para tener el plugin en la nube, añade al script de configuración del entorno:
+
+```
+claude plugin marketplace add ilopmuo/Claudemods || true
+claude plugin install model-router@claudemods || true
+```
+
 ### Instalar
 
 En la app de escritorio: **+** junto al prompt → **Plugins** → **Add marketplace** con `ilopmuo/Claudemods` → **Add plugin** → `model-router`.
