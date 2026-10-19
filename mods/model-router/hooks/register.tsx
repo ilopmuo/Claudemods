@@ -180,12 +180,7 @@ export const register: Register = on => {
     }
     await show($, { tier, reason, isPending: false })
     if (bandDrawnOn.size === 0) {
-      // With no surface attached (a cloud session) nothing can be drawn: say it in the transcript.
-      if ((await $.session.surfaces()).length === 0) {
-        $.ui.log(`Router: ${MODELS[tier].name} ${MODELS[tier].cost} · ${reason}`)
-      } else {
-        void openPane($)
-      }
+      void openPane($)
     }
 
     return next(e)

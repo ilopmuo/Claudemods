@@ -142,12 +142,3 @@ describe('fallback', () => {
     expect(opened).toEqual([])
   })
 })
-
-describe('no surface', () => {
-  test('logs the chosen model to the transcript', async ($, on) => {
-    const logged: string[] = []
-    world(on, 'complex', [], [], logged)
-    await submit($, 'Rediseña la arquitectura')
-    expect(logged).toEqual(['Router: Opus $$$ · tarea compleja'])
-  })
-})
